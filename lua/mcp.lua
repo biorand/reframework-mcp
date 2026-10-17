@@ -1,11 +1,15 @@
--- mcp_bridge.lua
--- Place in: reframework/autorun/mcp_bridge.lua
+-- mcp.lua
+-- Place in: reframework/autorun/mcp.lua
 --
 -- Polls for reframework/data/mcp_input.lua every second.
 -- When found, executes its contents in a sandboxed environment,
 -- captures print() output + return values + errors,
 -- writes everything to reframework/data/mcp_output.txt,
--- then deletes the input file so it doesn't re-run.
+-- then blanks the input file so it doesn't re-run.
+--
+-- The input may carry a "refmcp_request_id" marker (first line, written by the
+-- MCP server). It is echoed into the output header so the server can match the
+-- output to the request that produced it.
 
 local INPUT_FILE     = "mcp_input.lua"
 local OUTPUT_FILE    = "mcp_output.txt"
@@ -42,6 +46,11 @@ local function serialize(val, depth)
         -- userdata, function, thread, etc.
         return "<" .. t .. ": " .. tostring(val) .. ">"
     end
+end
+
+-- Extract the request id marker written by the MCP server, if present.
+local function get_request_id(source)
+    return source:match("^%-%- refmcp_request_id: ([%w%-]+)") or "none"
 end
 
 -- Run a Lua source string in a restricted env, return {output, error}.
@@ -121,11 +130,13 @@ re.on_frame(function()
     local source = fs.read(INPUT_FILE)
     if source == nil or source == "" then return end
 
-    log.debug("[mcp_bridge] mcp_input.lua detected - executing...")
+    log.debug("[mcp] mcp_input.lua detected - executing...")
 
-    -- Build the output header.
+    -- Build the output header (echoing the request id back to the server).
+    local req_id      = get_request_id(source)
     local timestamp   = os.date("%Y-%m-%d %H:%M:%S")
-    local header      = "-- mcp_output.txt | executed: " .. timestamp .. "\n"
+    local header      = "-- refmcp_request_id: " .. req_id .. "\n"
+        .. "-- mcp_output.txt | executed: " .. timestamp .. "\n"
         .. string.rep("-", 60) .. "\n"
 
     local output, err = execute_script(source)
@@ -145,12 +156,12 @@ re.on_frame(function()
 
     -- Write result.
     fs.write(OUTPUT_FILE, full_output)
-    log.debug("[mcp_bridge] wrote " .. OUTPUT_FILE)
+    log.debug("[mcp] wrote " .. OUTPUT_FILE)
 
     -- Erase the input file so it won't re-run next poll.
     fs.write(INPUT_FILE, "")
 
-    log.debug("[mcp_bridge] done.")
+    log.debug("[mcp] done.")
 end)
 
-log.debug("[mcp_bridge] loaded - polling every " .. CHECK_INTERVAL .. " frames for " .. INPUT_FILE)
+log.debug("[mcp] loaded - polling every " .. CHECK_INTERVAL .. " frames for " .. INPUT_FILE)
