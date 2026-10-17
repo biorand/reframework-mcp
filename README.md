@@ -4,27 +4,47 @@ Node-based MCP server integration for REFramework.
 
 ## Quick start
 
-1. Install and build the server:
+### Option A: npx (published package)
 
-   ```powershell
-   cd ts
-   npm install
-   npm run build
-   ```
+Add the published package to your MCP servers configuration:
 
-2. Add the server to your MCP configuration (see [Add to your MCP servers JSON](#add-to-your-mcp-servers-json)).
+```json
+{
+  "mcpServers": {
+    "reframework": {
+      "command": "npx",
+      "args": ["-y", "@biorand/reframework-mcp"]
+    }
+  }
+}
+```
 
-3. Get the game ready. Easiest: ask your agent to run the `install_bridge` tool with your
-   game install directory (e.g. `C:\Games\RE9`). It will copy `mcp.lua` into
-   `<GAME INSTALL DIR>\reframework\autorun\mcp.lua`, create/enable the data directory, and
-   verify REFramework is actually installed (it reports exactly what is wrong if it is not).
+Pin a version for reproducible setups, e.g. `"@biorand/reframework-mcp@1.1.0"`.
 
-   If REFramework is already installed and the bridge is already in place, the agent can just
-   call `set_data_dir` instead. Both tools remember the choice, so `REF_DATA_DIR` is optional.
+### Option B: from a local checkout
 
-   After the bridge is installed or updated, reload the Lua scripts in-game
-   (REFramework menu → ScriptRunner → Reset Scripts, or restart the game) before calling
-   `execute_code` — autorun scripts are only loaded on startup/reload.
+```powershell
+cd ts
+npm install
+npm run build
+```
+
+Then point `args` at `ts\dist\index.js` (see
+[Add to your MCP servers JSON](#add-to-your-mcp-servers-json)).
+
+### Then: get the game ready
+
+Ask your agent to run the `install_bridge` tool with your game install directory
+(e.g. `C:\Games\RE9`). It will copy `mcp.lua` into
+`<GAME INSTALL DIR>\reframework\autorun\mcp.lua`, create/enable the data directory, and
+verify REFramework is actually installed (it reports exactly what is wrong if it is not).
+
+If REFramework is already installed and the bridge is already in place, the agent can just
+call `set_data_dir` instead. Both tools remember the choice, so `REF_DATA_DIR` is optional.
+
+After the bridge is installed or updated, reload the Lua scripts in-game
+(REFramework menu → ScriptRunner → Reset Scripts, or restart the game) before calling
+`execute_code` — autorun scripts are only loaded on startup/reload.
 
 Manual alternative to `install_bridge`:
 
@@ -39,8 +59,21 @@ Copy-Item "M:\git\refmcp\lua\mcp.lua" "C:\Games\RE9\reframework\autorun\mcp.lua"
 
 ## Add to your MCP servers JSON
 
-Add (or merge) the following entry into your MCP servers configuration. Use absolute Windows
-paths for `args` and env values:
+npx (published package):
+
+```json
+{
+  "mcpServers": {
+    "reframework": {
+      "command": "npx",
+      "args": ["-y", "@biorand/reframework-mcp"]
+    }
+  }
+}
+```
+
+From a local checkout (after `cd ts`, `npm install`, `npm run build`). Use absolute
+Windows paths for `args` and env values:
 
 ```json
 {
@@ -104,7 +137,8 @@ Example with optional variables:
 
 ## Notes & troubleshooting
 
-- Ensure `node` is available in PATH and that `ts\dist\index.js` exists after building.
+- For local-checkout installs, ensure `node` is available in PATH and that
+  `ts\dist\index.js` exists after building.
 - Use absolute Windows-style paths (backslashes) in your MCP servers configuration on Windows hosts.
 - If `execute_code` times out, check (the error message lists these too):
   - the game is running with REFramework loaded;
@@ -112,6 +146,37 @@ Example with optional variables:
   - the Lua scripts were reloaded after the bridge was installed/updated;
   - the configured data directory matches the game you are running;
   - the REFramework log (in the game directory) for `[mcp]` messages.
+
+## Publishing (maintainers)
+
+Publishing is automated by
+[`.github/workflows/publish.yml`](.github/workflows/publish.yml): publishing a GitHub
+release builds the server and publishes `@biorand/reframework-mcp` with npm provenance.
+The release tag must match the version in `ts/package.json` (tag `v1.1.0` ↔ version
+`1.1.0`), otherwise the workflow fails before publishing.
+
+One-time setup:
+
+1. Own the `biorand` npm scope: either your npm username is `biorand`, or create the
+   `biorand` organization on npmjs.com and join it.
+2. Create an npm Automation token with publish rights and add it to the repository
+   secrets as `NPM_TOKEN`.
+3. Optional but recommended after the first release: configure npm trusted publishing
+   for the package (package settings on npmjs.com) with this repository and the
+   `publish.yml` workflow, then delete the `NPM_TOKEN` secret — the workflow then
+   authenticates via OIDC instead.
+
+To cut a release: bump the version in `ts/package.json`, merge to `master`, then create
+a GitHub release with the matching `v<version>` tag. The workflow also supports manual
+dispatch if needed.
+
+Manual fallback:
+
+```powershell
+cd ts
+npm login
+npm publish
+```
 
 ## Where to find files in this repo
 

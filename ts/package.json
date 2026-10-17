@@ -1,15 +1,39 @@
 {
-  "name": "mcp-reframework",
+  "name": "@biorand/reframework-mcp",
   "version": "1.1.0",
-  "description": "",
-  "main": "index.js",
+  "description": "MCP server for running Lua inside RE Engine games via REFramework",
+  "main": "dist/index.js",
   "scripts": {
     "build": "tsc && node scripts/copy-lua.mjs",
-    "start": "node dist/index.js"
+    "start": "node dist/index.js",
+    "prepack": "npm run build"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "reframework",
+    "re-engine",
+    "modding"
+  ],
+  "author": "biorand",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/biorand/reframework-mcp.git"
+  },
+  "homepage": "https://github.com/biorand/reframework-mcp#readme",
+  "bugs": {
+    "url": "https://github.com/biorand/reframework-mcp/issues"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
     "zod": "^4.4.3"
@@ -20,6 +44,6 @@
   },
   "type": "module",
   "bin": {
-    "reframework-mcp": "./dist/index.js"
+    "reframework-mcp": "dist/index.js"
   }
 }
