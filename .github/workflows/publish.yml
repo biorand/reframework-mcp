@@ -47,11 +47,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Upgrade npm (trusted publishing needs >= 11.5.1)
+        run: npm install -g npm@latest
+
       - name: Publish to npm
+        # Authenticates via npm trusted publishing (OIDC); no token secret.
         run: npm publish --provenance
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        # Alternative to the NPM_TOKEN secret: configure npm trusted publishing
-        # for this package (npmjs.com -> package settings -> Trusted Publisher)
-        # with the repository and this workflow file name, then remove the
-        # NODE_AUTH_TOKEN env entry. Provenance already works via id-token.
